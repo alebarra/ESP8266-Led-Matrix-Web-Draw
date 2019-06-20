@@ -12,8 +12,11 @@
 #include <Arduino.h>
 
 #include <ESP8266WiFi.h>
+
 #include <WebSocketsServer.h>
 #include <Hash.h>
+#include <ESP8266mDNS.h>
+
 /*
  * when use " display.setDriverChip(FM6126A); "
  * Compile with
@@ -250,6 +253,21 @@ void setup() {
   Serial.println("IP address: ");
   IPAddress ip = WiFi.localIP();
   Serial.println(ip);
+  /*
+   * mDNS init
+   */
+  String localmDNSname = "webdisplay";
+  if (!MDNS.begin(localmDNSname)) {// Start the mDNS responder
+    Serial.println("Error setting up MDNS responder!");
+  }
+  Serial.println("mDNS responder started, esp respond to "+localmDNSname+ ".local name");
+   // Add service to MDNS-SD
+  MDNS.addService("http", "tcp", 80);
+  MDNS.addService("wss", "tcp", 81);
+  
+  /* 
+   *  Display init
+   */
   display.begin(16);
   delay(2000);
     display.setDriverChip(FM6126A);
@@ -260,6 +278,8 @@ void setup() {
 }
 
 void loop() {
+  
+  MDNS.update();
   webSocket.loop();
 
 }
