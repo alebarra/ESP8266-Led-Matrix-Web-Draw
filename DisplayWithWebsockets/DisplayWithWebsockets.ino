@@ -14,7 +14,16 @@
 #include <ESP8266WiFi.h>
 #include <WebSocketsServer.h>
 #include <Hash.h>
-
+/*
+ * when use " display.setDriverChip(FM6126A); "
+ * Compile with
+ * Exception->Enabled
+ * CPU Frequency=160MHz
+ * 
+ * to avoid esp reboot
+ * 
+ */
+ 
 // ----------------------------
 // Standard Libraries - Already Installed if you have ESP8266 set up
 // ----------------------------
@@ -36,6 +45,7 @@
 Ticker display_ticker;
 
 // Pins for LED MATRIX
+/*
 #define P_LAT 16
 #define P_A 5
 #define P_B 4
@@ -43,10 +53,17 @@ Ticker display_ticker;
 #define P_OE 2
 #define P_D 12
 #define P_E 0
-
+*/
+#define P_LAT D0
+#define P_A D1
+#define P_B D2
+#define P_C D8
+#define P_D D6
+#define P_E D3
+#define P_OE D4
 // PxMATRIX display(32,16,P_LAT, P_OE,P_A,P_B,P_C);
-// PxMATRIX display(64,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
-PxMATRIX display(64, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
+PxMATRIX display(64,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
+//PxMATRIX display(64, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
 
 //------- Replace the following! ------
 char ssid[] = WIFI_NAME;       // your network SSID (name)
@@ -209,8 +226,7 @@ void setup() {
 
   Serial.begin(115200);
 
-  display.begin(16);
-  display.clearDisplay();
+
 
   display_ticker.attach(0.002, display_updater);
   yield();
@@ -234,9 +250,13 @@ void setup() {
   Serial.println("IP address: ");
   IPAddress ip = WiFi.localIP();
   Serial.println(ip);
-
+  display.begin(16);
+  delay(2000);
+    display.setDriverChip(FM6126A);
+  display.clearDisplay();
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
+
 }
 
 void loop() {
