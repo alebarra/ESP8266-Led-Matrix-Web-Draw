@@ -16,16 +16,8 @@
 #include <WebSocketsServer.h>
 #include <Hash.h>
 #include <ESP8266mDNS.h>
-
-/*
- * when use " display.setDriverChip(FM6126A); "
- * Compile with
- * Exception->Enabled
- * CPU Frequency=160MHz
- * 
- * to avoid esp reboot
- * 
- */
+#include <ESP8266WiFiMulti.h> 
+ESP8266WiFiMulti wifiMulti; 
  
 // ----------------------------
 // Standard Libraries - Already Installed if you have ESP8266 set up
@@ -69,8 +61,8 @@ PxMATRIX display(64,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
 //PxMATRIX display(64, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, P_E);
 
 //------- Replace the following! ------
-char ssid[] = WIFI_NAME;       // your network SSID (name)
-char password[] = WIFI_PASS;  // your network key
+//char ssid[] = WIFI_NAME;       // your network SSID (name)
+//char password[] = WIFI_PASS;  // your network key
 
 WebSocketsServer webSocket = WebSocketsServer(81);
 
@@ -234,12 +226,13 @@ void setup() {
   display_ticker.attach(0.002, display_updater);
   yield();
 
+/*
   // Set WiFi to station mode and disconnect from an AP if it was Previously
   // connected
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   delay(100);
-
+  
   // Attempt to connect to Wifi network:
   Serial.print("Connecting Wifi: ");
   Serial.println(ssid);
@@ -253,6 +246,23 @@ void setup() {
   Serial.println("IP address: ");
   IPAddress ip = WiFi.localIP();
   Serial.println(ip);
+
+  */
+  wifiMulti.addAP(WIFI_01_NAME, WIFI_01_PASS); 
+  wifiMulti.addAP(WIFI_02_NAME, WIFI_02_PASS);
+
+  int i = 0;
+  while (wifiMulti.run() != WL_CONNECTED) { // Wait and connect to the strongest of the networks above
+    delay(1000);
+    Serial.print('.');
+  }
+  Serial.println('\n');
+  Serial.print("Connected to ");
+  Serial.println(WiFi.SSID());              // Tell us what network we're connected to
+  Serial.print("IP address:\t");
+  Serial.println(WiFi.localIP());           // Send the IP address of the ESP8266 to the computer
+
+  
   /*
    * mDNS init
    */
@@ -260,7 +270,7 @@ void setup() {
   if (!MDNS.begin(localmDNSname)) {// Start the mDNS responder
     Serial.println("Error setting up MDNS responder!");
   }
-  Serial.println("mDNS responder started, esp respond to "+localmDNSname+ ".local name");
+
    // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
   MDNS.addService("wss", "tcp", 81);
@@ -274,7 +284,7 @@ void setup() {
   display.clearDisplay();
   webSocket.begin();
   webSocket.onEvent(webSocketEvent);
-
+  Serial.println("mDNS responder started, esp respond to "+localmDNSname+ ".local name");
 }
 
 void loop() {
